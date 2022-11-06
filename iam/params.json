@@ -1,0 +1,6 @@
+{
+    "Parameters": {
+        "DNSZoneID": "Z03509961KIQ008VPO4WD",
+        "GLAuthConfigARN": "arn:aws:s3:::lessbroken-infrastructure/glauth.conf"
+    }
+}

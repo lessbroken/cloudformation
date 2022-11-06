@@ -1,0 +1,53 @@
+Parameters:
+  DNSZoneID:
+    Type: String
+    Description: "Hosted Zone ID of the lessbroken.org zone"
+
+  GLAuthConfigARN:
+    Type: String
+    Description: "ARN of the GLAuth config object in S3"
+    Default: "arn:aws:s3:::lessbroken-infrastructure/glauth.conf"
+
+Resources:
+  ACMEDNSUser:
+    Type: "AWS::IAM::User"
+    Properties:
+      UserName: lessbroken-acme-dns
+      Policies:
+        # https://go-acme.github.io/lego/dns/route53/
+        - PolicyName: ACMEDNSPolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: "route53:GetChange"
+                Resource: "arn:aws:route53:::change/*"
+
+              - Effect: Allow
+                Action: "route53:ListHostedZonesByName"
+                Resource: "*"
+
+              - Effect: Allow
+                Action: "route53:ListResourceRecordSets"
+                Resource: !Sub "arn:aws:route53:::hostedzone/${DNSZoneID}"
+
+              - Effect: Allow
+                Action: "route53:ChangeResourceRecordSets"
+                Resource: !Sub "arn:aws:route53:::hostedzone/${DNSZoneID}"
+                Condition:
+                  "ForAllValues:StringLike":
+                    "route53:ChangeResourceRecordSetsNormalizedRecordNames": [ "_acme-challenge.*" ]
+                    "route53:ChangeResourceRecordSetsRecordTypes": [ "TXT" ]
+
+  GLAuthS3User:
+    Type: "AWS::IAM::User"
+    Properties:
+      UserName: lessbroken-glauth
+      Policies:
+        - PolicyName: GLAuthPolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: "s3:GetObject"
+                Resource: !Ref GLAuthConfigARN
